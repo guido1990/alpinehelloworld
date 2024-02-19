@@ -136,12 +136,12 @@ pipeline {
         }
     }
 
-    post {
-          always {
-              script {
-                  slackNotifier currentbuild.result
-              }
+     post {
+    always {
+          script {
+            slackNotifier currentBuild.result
           }
-    }
+    }  
+  }
 }
 
