@@ -3,6 +3,8 @@ pipeline {
         DOCKERHUB_AUTH = credentials('guisopo-docker_hub')
         ID_DOCKER = "${DOCKERHUB_AUTH_USR}"
         PORT_EXPOSED = "80"
+        HOSTNAME_DEPLOY_STAGING = "ec2-3-87-111-125.compute-1.amazonaws.com"
+        HOSTNAME_DEPLOY_PROD = "ec2-3-208-30-146.compute-1.amazonaws.com"
     }
     agent none
     stages {
@@ -66,9 +68,6 @@ pipeline {
 
         stage ('Deploy in staging') {
             agent any
-            environment {
-                HOSTNAME_DEPLOY_STAGING = "ec2-3-87-111-125.compute-1.amazonaws.com"
-            }
             steps {
                 sshagent(credentials: ['SSH_AUTH_SERVER']){
                     sh '''
@@ -88,11 +87,20 @@ pipeline {
                 }
             }
         }
+
+        stage('Test Staging') {
+                    agent any
+                    steps {
+                        script {
+                            sh '''
+                            curl ${HOSTNAME_DEPLOY_STAGING} | grep -q "Hello world Guido!"
+                            '''
+                        }
+                    }
+        }
+
         stage ('Deploy in prod') {
             agent any
-            environment {
-                HOSTNAME_DEPLOY_PROD = "ec2-3-208-30-146.compute-1.amazonaws.com"
-            }
             steps {
                 sshagent(credentials: ['SSH_AUTH_SERVER_PROD']){
                     sh '''
@@ -111,6 +119,17 @@ pipeline {
                     '''
                 }
             }
+        }
+
+        stage('Test Prod') {
+                    agent any
+                    steps {
+                        script {
+                            sh '''
+                            curl ${HOSTNAME_DEPLOY_PROD} | grep -q "Hello world Guido!"
+                            '''
+                        }
+                    }
         }
     }
 
